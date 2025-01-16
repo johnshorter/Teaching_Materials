@@ -1,0 +1,141 @@
+---
+title: "Logistic Regression KEY"
+author: "John Shorter"
+date: "April/3/2024"
+output:
+  html_document:
+    toc: yes  
+  html_notebook:   
+    number_sections: yes    
+    toc: yes  
+    toc_float: yes
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+We talked about linear regression and polynomial regression. 
+This time we are going to talk about an extension of linear regression - logistic regression 
+We will cover:
+
+1.  When to perform a logistic regression?
+2.  How to set up a logistic regression?
+3.  How to interpret a logistic regression?
+
+
+# Maybe install packages
+```{r}
+#install.packages("aod")
+#install.packages("ISLR")
+```
+
+
+# Load packages
+```{r}
+library(aod)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+# Exercise
+
+Now you have learned how to run a logistic regression. 
+It's time to practice.
+
+We’ll use the Default dataset from the ISLR package. This is a simulated data set containing information on ten thousand customers. The aim here is to predict which customers will default on their credit card debt.
+
+```{r}
+#load dataset
+data <- ISLR::Default
+
+#view summary of dataset
+summary(data)
+```
+
+
+This dataset contains the following information about 10,000 individuals:
+
+* default: Indicates whether or not an individual defaulted.
+
+* student: Indicates whether or not an individual is a student.
+
+* balance: Average balance carried by an individual.
+
+* income: Income of the individual.
+
+Make a boxplot showing the relationship between defaulting with balance as the y variable and fill as default. 
+
+```{r}
+data %>%
+  ggplot(aes(y = balance, fill = default)) +
+  geom_boxplot()
+```
+
+Now make a boxplot showing the distribution of balance across students.
+
+```{r}
+data %>%
+  ggplot(aes(y = balance, fill = student)) +
+  geom_boxplot()
+```
+
+
+If we plot the distribution of balance across student, we see that students tend to carry larger credit card balances. **That is interesting...**
+
+Estimates a logistic regression model using the glm function with default as the outcome. 
+
+Make one model with **student** as the only predictor, then a second model with all variables in the dataset. 
+
+```{r}
+model_full <- glm(default~student+balance+income, family="binomial", data=data)
+
+model_student <- glm(default~student, family="binomial", data=data)
+```
+
+
+Interpret the summary of the model. What variables are the most or least significant on default status?
+
+```{r}
+summary(model_full)
+
+summary(model_student)
+```
+
+Can you calculate the OR for the variables in the full model and the student only model? 
+
+```{r}
+## odds ratios and 95% CI
+exp(cbind(OR = coef(model_full), confint(model_full)))
+
+
+exp(cbind(OR = coef(model_student), confint(model_student)))
+```
+
+Determine the AIC of both models and them make a conclusion about which is better. 
+```{r}
+AIC(model_full, model_student)
+```
+
+## Conclusion
+
+In the model with only student, we see that students have a higher rate of defaulting compared to non-students.
+
+In the full model, notice that being a student now decreases the chances of default, whereas in the student only model, it increased the chances.
+
+Why is that? This model is showing that, for a fixed value of income and balance, students actually default less. This is because student and balance are correlated.
+
+This example illustrates the dangers of drawing insights from single predictor regressions when other predictors may be relevant. The results from using one predictor can be substantially different compared to using multiple predictors. This phenomenon is known as *confounding*.
+
+
+In the full model, we can see that balance and student status seem to be important predictors since they have low p-values while income is not nearly as important.
+
+The coefficients in the output indicate the average change in log odds of defaulting. For example, a one unit increase in balance is associated with an average increase of 0.005737 in the log odds of defaulting.
+
+We also see that the full model has a lower AIC, which means it is more parsimonious.

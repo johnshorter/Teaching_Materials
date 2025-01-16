@@ -1,0 +1,127 @@
+---
+title: "One-way ANOVA and the compact letter display (Tukey) key"
+author: "John Shorter"
+date: "Feb/28/2022"
+output:
+  html_document:
+    toc: yes  
+  html_notebook:   
+    number_sections: yes    
+    toc: yes  
+    toc_float: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+
+```{r}
+library(emmeans) #three new packages you might need to install them 
+library(multcomp)
+library(multcompView)
+
+library(ggplot2) 
+library(tidyr)
+library(dplyr)
+library(readr)
+library(readxl)
+library(RColorBrewer)
+library(viridis)
+```
+
+# Data
+
+<https://github.com/allisonhorst/palmerpenguins>\
+Ref: Gorman KB, Williams TD, Fraser WR (2014) PLoS ONE 9(3): e90081. <https://doi.org/10.1371/journal.pone.0090081>
+
+```{r}
+#remotes::install_github("allisonhorst/palmerpenguins") #download the data from Github.
+#you might need to install the "remotes" package
+library(palmerpenguins)
+```
+
+# Data visualization
+
+```{r}
+wisteria <- c("grey65", "burlywood3", "khaki2", "plum1", "lightcyan2", "cornflowerblue", "slateblue3")
+
+ penguins %>% 
+  ggplot(aes(x = species, y = bill_length_mm)) + 
+  geom_point(aes(fill = species),
+             position = position_jitter(0.1, seed = 666),
+             alpha = 0.8,
+             size = 3,
+             shape = 21,
+             color = "white") +
+  scale_fill_manual(values = wisteria[c(1,6,7)]) +
+  labs(x = "species", 
+       y = "bill length (mm)") +
+  theme_minimal() +
+  theme(axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, color = "black", face = "bold"),
+        axis.text = element_text(color = "black"),
+        legend.position = "none")
+```
+
+# Exercise
+
+Now try it out yourself! Compare the bill depth across the three species and find out which one has the widest bill.
+
+## Visualize the data
+
+```{r}
+head(penguins)
+```
+
+```{r}
+penguins %>% 
+  ggplot(aes(x = species, y = bill_depth_mm)) + 
+  geom_point(aes(fill = species),
+             position = position_jitter(0.1, seed = 666),
+             size = 3,
+             shape = 21,
+             color = "white") +
+  scale_fill_manual(values = wisteria[c(1,6,7)]) +
+  labs(x = "species", 
+       y = "bill length (mm)") +
+  theme_minimal() +
+  theme(axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, color = "black", face = "bold"),
+        axis.text = element_text(color = "black"),
+        legend.position = "none")
+```
+
+## Set up the linear model and check assumptions
+
+```{r}
+model_depth <- lm(bill_depth_mm ~ species, data = penguins)
+plot(model_depth)
+```
+
+Prety okay
+
+## Run ANOVA and interpret the ANOVA table
+
+```{r}
+anova(model_depth)
+```
+
+F = 359, and P value is very small. Reject the null hypothesis of depth being equal across three species.
+
+## Run Tukey tests and interpret the contrast
+
+```{r}
+estimate_depth <- emmeans(model_depth, pairwise ~ species)
+estimate_depth$contrast
+```
+
+## Report the compact letter display and interpret the cld output
+
+```{r}
+cld(estimate_depth$emmeans, Letters = letters)
+```
+
+Gentoo has the least deep bill.
+The other two species are not statistically different from each other.

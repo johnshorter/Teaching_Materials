@@ -1,0 +1,123 @@
+---
+title: "Formatting ggplots key"
+author: "John Shorter"
+date: "Feb/21/2024"
+output:
+  html_document:
+    toc: yes  
+  html_notebook:   
+    number_sections: yes    
+    toc: yes  
+    toc_float: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+
+You might need to install some of these packages
+
+```{r}
+library(ggplot2) 
+library(tidyr)
+library(dplyr)
+library(readr)
+library(readxl)
+```
+
+# Exercise - Now time for you to try
+
+Let's use the R built-in dataset CO2 as example: 
+Ref: Potvin, C., Lechowicz, M. J. and Tardif, S. (1990), Ecology, 71, 1389--1400.
+
+```{r}
+head(CO2)
+str(CO2)
+```
+
+Task: produce a plot that includes the info for Type and Treatment, with uptake on Y axis.
+Let's say we are interested in the effect of "Treatment" in each Type.
+
+Hint:
+
+1.  What should be on the x axis?
+2.  What variable do you color or fill with?
+3.  What faceting layout do you want to use?
+
+Now try to make the best plot you can!
+
+
+```{r}
+CO2 %>% 
+  ggplot(aes(x = Treatment, y = uptake)) +
+  facet_grid(. ~ Type, switch = "x") + 
+  geom_point(aes(fill = Treatment), size = 3, color = "white", shape = 21,
+             position = position_jitter(0.1, seed = 666)) +
+  stat_summary(geom = "errorbar", fun.data = mean_se, width = 0.2) +
+  scale_fill_manual(values = c("burlywood3", "slateblue3"),
+                    limits = c("nonchilled", "chilled")) +
+  labs(x = "Type") +
+  theme_minimal()+
+  theme(legend.position = "top",
+        axis.line = element_line(size = 1.2),
+        panel.spacing.x = unit(1, "lines"),
+        text = element_text(size = 12, color = "black", face = "bold"),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 12, color = "black", face = "bold"),
+        strip.placement = "outside"
+        )
+```
+
+# Exercise 2 - Something fun!
+
+Let's use the Pokemon data set from https://www.kaggle.com/datasets/abcsds/pokemon?resource=download.
+
+```{r}
+Pokemon <- read.csv("/work/Data/Rmodule_data/Pokemon.csv", stringsAsFactors = FALSE)
+
+Pokemon2 <- subset(Pokemon, Type.1 =='Water' | Type.1 =='Fire'| Type.1 =='Grass')
+Pokemon2 <- subset(Pokemon2, Generation =='1' | Generation == '2')
+#Don't worry about subsetting for now, we will go over this in a later lesson.
+```
+
+
+```{r}
+head(Pokemon2)
+str(Pokemon2)
+```
+
+Task: produce a plot that compares speed of fire, grass, and water pokemon from generations 1 and 2. Let's keep it simple and use only the primary type. (Type.1 column)
+
+Hint:
+
+1.  What should be on the x axis?
+2.  What variable do you color or fill with?
+3.  What faceting layout do you want to use?
+
+Now try to make the best plot you can!
+
+Which type is the fastest?
+Which pokemon is the fastest?
+
+```{r}
+Pokemon2 %>% 
+  ggplot(aes(x = Type.1, y = Speed)) +
+  facet_grid(. ~ Generation, switch = "x") + 
+  geom_point(aes(fill = Type.1), size = 3, color = "white", shape = 21,
+             position = position_jitter(0.1, seed = 666)) +
+  stat_summary(geom = "errorbar", fun.data = mean_se, width = 0.2) +
+  scale_fill_manual(values = c("red3", "slateblue3", "green3"),
+                    limits = c("Fire", "Water", "Grass")) +
+  labs(x = "Generation") +
+  theme_bw()+
+  theme(legend.position = "top",
+        axis.line = element_line(size = 1.2),
+        panel.spacing.x = unit(1, "lines"),
+        text = element_text(size = 12, color = "black", face = "bold"),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 12, color = "black", face = "bold"),
+        strip.placement = "outside"
+        )
+```

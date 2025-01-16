@@ -1,0 +1,138 @@
+---
+title: "LLMs and ggplot"
+author: "John Shorter"
+date: "Feb/28/2024"
+output:
+  html_document:
+    toc: yes  
+  html_notebook:   
+    number_sections: yes    
+    toc: yes  
+    toc_float: yes  
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Let's use the R built-in dataset CO2 as example: Ref: Potvin, C., Lechowicz, M. J.
+and Tardif, S.
+(1990), Ecology, 71, 1389--1400.
+
+```{r}
+head(CO2)
+str(CO2)
+```
+
+Task: produce a plot using chatGPT (https://openai.com/blog/chatgpt) or RTutor (https://rtutor.ai/) or another AI tool.
+
+In the last exercise, you made the best plot you could using example code that I provided to you. Now, I want you to try to generate an even better plot using Large Language Models (LLMs). 
+
+# What to ask the AI?
+
+LLMs are powerful tools that can assist data scientists in various tasks, from coding to data analysis. The prompts that you give to the AI are very important. Changing certain words can give you very different results. Here are some examples of prompts you can ask of these AI tools
+
+General R Coding Prompts
+
+*  Data Import: “How do I import data from an excel file into R?”
+*  Data Wrangling: “Show me how to filter rows in a dataframe based on a condition in R.”
+
+Debugging R Code
+
+*  Error Identification: “I’m getting an unexpected error in this R code snippet. Can you help me identify the problem?”
+*  Code Optimization: “Can you suggest ways to make this R code run faster?”
+
+Statistical Analysis
+
+*  Descriptive Statistics: “Provide me with a summary of the basic descriptive statistics for this dataframe in R.”
+*  Hypothesis Testing: “Explain how to perform a t-test in R.”
+
+Visualization
+
+*  Plot Creation: “How do I create a boxplot with ggplot2 in R?”
+*  Customization: “Show me how to customize the axes labels and title of a plot in R.”
+
+R Markdown
+
+*  Report Generation: “What’s the syntax for creating a header in R Markdown?”
+*  Dynamic Reporting: “Explain how to include R code chunks in an R Markdown document for dynamic report generation.”
+
+
+# Warnings about using AI to generate code
+
+Everything you ask using these tools gets sent to OpenAI's servers. Don't use ChatGPT tools to process sensitive information.
+
+ChatGPT may confidently return incorrect answers. Even incorrect responses can be a starting point, and save you time, but don't assume the code will do exactly what you expect. 
+
+One major thing to be aware of is that **ChatGPT will often make fake data as an example**. DO NOT just copy and paste everything. Be critical of the output and think before you incorporate it in your code.
+
+ChatGPT can also generate different responses to the same query—and some answers might be accurate while others aren't. For instance, when I asked multiple times for a ggplot2 bar chart with blue bars, the code generated a graph with blue bars sometimes but not others, even though I submitted the same request each time. This is less than ideal if you need a reproducible workflow.
+
+LLMs have training data cutoff dates, so if there's been a recent update to a package you're using, your tool of choice may not know about it.
+
+
+# Now you try 
+
+Enter in your AI assisted R code below and produce a publication quality figure.
+
+
+```{r}
+# Remember to comment your text
+
+library(ggplot2)
+
+ggplot(CO2, aes(x = interaction(Type, Treatment), y = uptake, color = Treatment)) +
+  geom_boxplot(outlier.shape = NA) + # Hide outliers to avoid overplotting with points
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.75), alpha = 0.5, size = 2) +
+  labs(x = "Type and Treatment", y = "Uptake") +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 14),
+    plot.caption = element_text(size = 8),
+    legend.position = "right",
+    legend.background = element_rect(fill = "white", size = 0.5, linetype = "solid"),
+    legend.box.background = element_rect(color = "black", size = 1)
+  )
+
+
+```
+
+
+
+I would like you to enter here what prompts you used, and tell me what worked and what did not work
+
+```{r}
+# produce a publication quality box plot with points that includes the info for Type and Treatment, with uptake on Y axis.
+
+
+
+
+```
+
+# Other things to know
+
+## RTutor
+
+This app is an elegant and easy way to sample ChatGPT and R. Upload a data set, ask a question, and watch as it generates R code and your results, including graphics. Although it's named RTutor, the app can also generate Python code.
+
+RTutor is available on the web. It's currently the only app that doesn't require a ChatGPT API key to use, but you're asked to supply your own for heavy use so as not to bill the creators' account.
+
+The app's About page explains that RTutor's primary goal is "to help people with some R experience to learn R or be more productive ... RTutor can be used to quickly speed up the coding process using R. It gives you a draft code to test and refine. Be wary of bugs and errors."
+
+The code for RTutor is open source and available on GitHub, so you can install your own local version. However, licensing only allows using the app for nonprofit or non-commercial use, or for commercial testing. RTutor is a personal project of Dr. Steven Ge, a professor of bioinformatics at South Dakota State University. 
+
+## Be aware!
+
+Everything related to AI and LLMs is rapidly changing. Be aware that what works now (and is free) may change in a few months.

@@ -1,0 +1,424 @@
+---
+title: "How to design different color palettes in R"
+author: "John Shorter"
+date: "Feb/21/2024"
+output:
+  html_document:
+    toc: yes  
+  html_notebook:   
+    number_sections: yes    
+    toc: yes  
+    toc_float: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Color palette is an important aspect of plots. They make the plots prettier and easy to read.
+The quality of the plots is part of the quality of the work.
+If your plots are nice, people take them more seriously.
+A color palette is a pre-defined set of colors to be used in making plots.
+
+The desired properties of a color palette include:
+
+1.  Colorblind friendly;
+2.  Easily discernible colors - the colors are not too similar to each other; 
+3.  Pretty.
+
+You can design your own color palette in R. This workbook demonstrates how to do that.
+
+# load packages
+
+You might need to install some of these packages
+```{r}
+install.packages("maps")
+install.packages("viridis") 
+install.packages("mapproj")
+```
+
+```{r}
+library(ggplot2)  
+library(tidyr)  
+library(dplyr)  
+library(RColorBrewer)  
+library(viridis)  
+```
+
+`RColorBrewer` and `viridis` are two packages of pre-made color palettes that you can use.
+
+# Data
+
+we will simulate some data
+
+```{r}
+data <- data.frame(
+  treatment = c("1", "2", "3", "4", "5", "6", "7"),
+  response = c(10, 20, 30, 40, 50, 60, 70)
+)
+
+head(data)
+```
+
+## RColorBrewer
+
+RColorBrewer has some pre-made color palettes that you can use if you don't bother to make your own.
+They are pretty good!
+To set the colors or fill, use `scale_color_brewer()` or `scale_fill_brewer()`.
+You can look at all the palattes here.
+
+```{r}
+RColorBrewer::display.brewer.all()
+```
+
+(FYI: If your output shows in line with your code,
+to the upper left corner of the output,
+there is a "show in new window" button. Click that and drag the window longer to see it better.
+If your output shows up in the Plots area at the lower right hand side, you can click "Zoom")
+
+There are three groups of palettes.
+
+The top group is continuous unidirectional.
+They are meant for variables that are from 0 to Inf (or -Inf).
+
+The second group is qualitative. 
+This is meant for discrete variables.
+
+The third group is continuous bidirectional.
+They are meant for variables ranging from -Inf to Inf, with both positive and negative values.
+
+```{r}
+data %>%  
+  ggplot(aes(x = treatment, y = response)) +
+  geom_bar(stat = "identity", aes(fill = treatment)) +  
+  scale_fill_brewer(palette = "Accent") + #call the palette here
+  labs(x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.line = element_line(linewidth = 1.2),
+        text = element_text(size = 12, face = "bold", color = "black"),
+        axis.text = element_blank(),
+        panel.grid = element_blank()
+        ) +
+  coord_flip()
+```
+
+This is the "Accent" palette from `RColorBrewer`. If you use `scale_fill_brewer(palette = "Accent")` you can specify the Accent palette from `RcolorBrewer`.
+
+```{r}
+data %>%  
+  ggplot(aes(x = treatment, y = response)) +
+  geom_bar(stat = "identity", aes(fill = treatment)) +  
+  scale_fill_brewer(palette = "Set2") + #call the palette here
+  labs(x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, face = "bold", color = "black"),
+        axis.text = element_blank(),
+        panel.grid = element_blank()
+        ) +
+  coord_flip()
+```
+
+This is the "Set2" palette from `RColorBrewer`.
+
+# Example 1 - "wisteria"
+
+Now let's make our own palette.
+
+Wisteria is a color palette, inspired by the beautiful flowers of the [wisteria vines](https://en.wikipedia.org/wiki/Wisteria).
+
+If you want a beautiful palette, a good place to start is flowers.
+
+![wisteria picture](https://images.homedepot-static.com/productImages/28c9482e-40e2-4b71-b2a3-f43f31409cf5/svn/vigoro-vines-climbing-plants-58023fl-64_1000.jpg)
+
+```{r}
+wisteria <-
+  c("grey65", "burlywood3", "khaki2", "plum1", "lightcyan2", "cornflowerblue", "slateblue3")   
+```
+
+Most of the experiments have less than 7 treatments, so 7 colors should be good enough.
+
+R has a bunch of built-in color names.
+You can directly call their names (in " ") in ggplot, and ggplot will show that color.
+[Link to R color names](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf)
+
+You can save the palette as a character string of different color names using `c()`.
+
+```{r}
+data %>%  
+  cbind(wisteria) %>% 
+  ggplot(aes(x = treatment, y = response)) +
+  geom_bar(stat = "identity", aes(fill = treatment), alpha = 0.8) +  # this is alpha = 0.8, or 20% transparent
+  geom_text(aes(label = wisteria, y = response), size = 5, hjust = 1.25) +
+  scale_fill_manual(values = wisteria) + #call the palette here
+  labs(x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, face = "bold", color = "black"),
+        axis.text = element_blank(),
+        panel.grid = element_blank()
+        ) +
+  coord_flip() 
+```
+
+```{r}
+data %>%  
+  cbind(wisteria) %>% 
+  ggplot(aes(x = treatment, y = response)) +
+  geom_bar(stat = "identity", aes(fill = treatment), alpha = 1) +  # this is alpha = 1, or 0% transparent
+  geom_text(aes(label = wisteria, y = response), size = 5, hjust = 1.25) +
+  scale_fill_manual(values = wisteria) + #call the palette here
+  labs(x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, face = "bold", color = "black"),
+        axis.text = element_blank(),
+        panel.grid = element_blank()
+        ) +
+  coord_flip() 
+```
+
+Can you tell the differences between colors? Yes? Good.
+
+## How do I check if my palette is colorblind friendly?
+
+There is free software called ["Color Oracle"](http://colororacle.org/).
+It simulate colorblindness on your computer.
+If you can still discern the colors after you turn on "Deuteranopia", it should be good. 
+
+# Example2 - Higanbana
+
+Higanbana is another palette, based on the [red spider lily](https://en.wikipedia.org/wiki/Lycoris_radiata)
+
+![picture of red spider lily ](https://upload.wikimedia.org/wikipedia/commons/4/48/Red_Spider_Lily----Lycoris_radiata.jpg)
+
+Again if you want beautiful palettes, flowers is a good place to start.
+Colorful fishes is a good place to start too. 
+
+## Pick colors
+
+What can I do if I don't want to be confined by pre-existing colors in R?
+
+For Windows: ["takecolor" is a free app](https://download.cnet.com/TakeColor/3000-2192_4-10387506.html).
+After unzipping, run the `.exe` file. Hover your mouse on the color. Alt + C will record the color.
+
+For MAC:
+OS X comes with DigitalColor Meter:
+Applications > Utilities > Digital Color Meter.app
+It has many options and preferences.
+command+shift+c will copy the color under the cursor to the clipboard in many different formats.
+
+```{r}
+Higanbana <- c(
+  "#FED731",
+  "#FDA888",
+  "#EF5960",
+  "#E70F25",
+  "#8C030B",
+  "#450110",  
+  "#1F0A0A" 
+)
+```
+
+These are the colors I picked from higanbana photos.
+Note: these color names are in the "hex code" format.
+The first two digits are red; second two are green; last two are blue.
+Each digit goes from 0 to F (16-nary), or 0 to 255 (16^2 - 1).
+
+-   White is #FFFFFF
+-   Black is #000000
+-   Red is #FF0000
+-   Green is #00FF00
+-   Blue is #0000FF
+
+```{r}
+data %>% 
+  cbind(Higanbana)%>% 
+  ggplot(aes(x = treatment, y = response)) +
+  geom_bar(stat = "identity", aes(fill = treatment), alpha = 1) + # this is alpha = 1, or 0% transparent 
+  geom_text(aes(label = Higanbana, y = response), size = 5, hjust = 1.1) +
+  scale_fill_manual(values = Higanbana) + #call the palette here
+  labs(x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, face = "bold", color = "black"),
+        axis.text = element_blank(),
+        panel.grid = element_blank()
+        ) +
+  coord_flip()
+
+```
+
+```{r}
+data %>% 
+  cbind(Higanbana)%>% 
+  ggplot(aes(x = treatment, y = response)) +
+  geom_bar(stat = "identity", aes(fill = treatment), alpha = 0.8) + # this is alpha = 0.8, or 20% transparent 
+  geom_text(aes(label = Higanbana, y = response), size = 5, hjust = 1.1) +
+  scale_fill_manual(values = Higanbana) + #call the palette here
+  labs(x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, face = "bold", color = "black"),
+        axis.text = element_blank(),
+        panel.grid = element_blank()
+        ) +
+  coord_flip()
+```
+
+Can you tell the differences between colors? Yes? Good.
+
+Again check with Color Oracle to see if your colors are colorblind friendly.
+If you can still discern the colors after you turn on "Deuteranopia", it should be good.
+
+# How can I design continous color gradients?
+
+## The continuous color palettes from RColorBrewer
+
+As I showed earlier, `RColorBrewer` has a set of pre-made continuous palette that you can use.
+
+## The viridis package
+
+The best continuous color gradients are always the viridis color maps. You can read more [here](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
+
+The viridis package contain 4 color scales: viridis, magma, plasma and inferno.
+They are all designed specifically for continuous color gradients.
+They are all colorblind friendly, as well as gray-scale friendly,
+meaning if you print them out in black and white, you can still read them.
+
+Here's a demonstration of the "inferno" option in viridis.
+
+```{r}
+library(maps) 
+#you might need to install the packages "maps" and "mapproj"
+```
+
+```{r}
+#load some data. Don't worry about this chunk
+unemp <- read.csv("http://datasets.flowingdata.com/unemployment09.csv",
+                  header = FALSE, stringsAsFactors = FALSE)
+names(unemp) <- c("id", "state_fips", "county_fips", "name", "year",
+                  "?", "?", "?", "rate")
+unemp$county <- tolower(gsub(" County, [A-Z]{2}", "", unemp$name))
+unemp$county <- gsub("^(.*) parish, ..$","\\1", unemp$county)
+unemp$state <- gsub("^.*([A-Z]{2}).*$", "\\1", unemp$name)
+
+county_df <- map_data("county", projection = "albers", parameters = c(39, 45)) 
+
+names(county_df) <- c("long", "lat", "group", "order", "state_name", "county")
+county_df$state <- state.abb[match(county_df$state_name, tolower(state.name))]
+county_df$state_name <- NULL
+
+state_df <- map_data("state", projection = "albers", parameters = c(39, 45))
+
+choropleth <- merge(county_df, unemp, by = c("state", "county"))
+choropleth <- choropleth[order(choropleth$order), ]
+```
+
+
+
+```{r}
+ggplot(choropleth, aes(long, lat, group = group)) +
+  geom_polygon(aes(fill = rate), colour = alpha("white", 1 / 2), size = 0.2) +
+  geom_polygon(data = state_df, colour = "white", fill = NA) +
+  coord_fixed() +
+  theme_minimal() +
+  ggtitle("US unemployment rate by county") +
+  theme(axis.line = element_blank(), axis.text = element_blank(),
+        axis.ticks = element_blank(), axis.title = element_blank()) +
+  scale_fill_viridis(option="inferno")
+```
+
+This is the "inferno" option from viridis
+
+```{r}
+ggplot(choropleth, aes(long, lat, group = group)) +
+  geom_polygon(aes(fill = rate), colour = alpha("white", 1 / 2), size = 0.2) +
+  geom_polygon(data = state_df, colour = "white", fill = NA) +
+  coord_fixed() +
+  theme_minimal() +
+  ggtitle("US unemployment rate by county") +
+  theme(axis.line = element_blank(), axis.text = element_blank(),
+        axis.ticks = element_blank(), axis.title = element_blank()) +
+  scale_fill_viridis(option="viridis")
+```
+
+This is the "viridis" option from viridis.
+
+
+# Exercise
+## Make your own color palette!
+
+You can see these two examples below. Make your own color pattern, then plot it using the code chunk below.
+
+R has a bunch of built-in color names.
+You can directly call their names (in " ") in ggplot, and ggplot will show that color.
+[Link to R color names](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf)
+
+You can save the palette as a character string of different color names using `c()`.
+
+```{r}
+Higanbana_c <- c(
+  "#FFE0A0",
+  "#FDA888",
+  "#EF5960",
+  "#E70F25",
+  "#8C030B",
+  "#450110",
+  "#000000"   
+) %>% 
+  rev()
+```
+
+
+```{r}
+wisteria <-  c(
+  "grey65", 
+  "burlywood3", 
+  "khaki2", 
+  "plum1", 
+  "lightcyan2", 
+  "cornflowerblue", 
+  "slateblue3")   
+```
+
+Make your own here. Uncomment these lines first
+```{r}
+
+# my_colors  
+  
+```
+
+
+```{r}
+# data %>%  
+#   cbind(my_colors) %>% 
+#   ggplot(aes(x = treatment, y = response)) +
+#   geom_bar(stat = "identity", aes(fill = treatment), alpha = 1) +
+#   geom_text(aes(label = my_colors, y = response), size = 5, hjust = 1.25) +
+#   scale_fill_manual(values = my_colors) +
+#   labs(x = NULL,
+#        y = NULL) +
+#   theme_minimal() +
+#   theme(legend.position = "none",
+#         axis.line = element_line(size = 1.2),
+#         text = element_text(size = 12, face = "bold", color = "black"),
+#         axis.text = element_blank(),
+#         panel.grid = element_blank()
+#         ) +
+#   coord_flip() 
+```

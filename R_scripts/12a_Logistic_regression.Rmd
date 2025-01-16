@@ -1,0 +1,309 @@
+---
+title: "Logistic Regression"
+author: "John Shorter"
+date: "April/3/2024"
+output:
+  html_document:
+    toc: yes  
+  html_notebook:   
+    number_sections: yes    
+    toc: yes  
+    toc_float: yes
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+We talked about linear regression and polynomial regression. 
+This time we are going to talk about an extension of linear regression - logistic regression 
+We will cover:
+
+1.  When to perform a logistic regression?
+2.  How to set up a logistic regression?
+3.  How to interpret a logistic regression?
+
+
+# Maybe install packages
+```{r}
+#install.packages("aod")
+#install.packages("ISLR")
+```
+
+
+# Load packages
+```{r}
+library(aod)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+What are the types of comparisons where we would want to use logistic regressioions with a rank of 1 have the highest prestige, while those with a rank of 4 have the lowest. We can get basic descriptives for the entire data set by using summary. To get the standard deviations, we use sapply to **apply** the **sd** function to each variable in the dataset.
+
+Let's look at the data in a few different ways. 
+
+```{r}
+summary(mydata)
+```
+
+```{r}
+sapply(mydata, sd)
+```
+
+```{r}
+## two-way contingency table of categorical outcome and predictors we want
+## to make sure there are not 0 cells
+xtabs(~admit + rank, data = mydata)
+```
+
+## Analysis methods you might consider
+
+Below is a list of some analysis methods you may have encountered. Some of the methods listed are quite reasonable while others have either fallen out of favor or have limitations.
+
+* Logistic regression, the focus of this exercise.
+
+* Probit regression. Probit analysis will produce results similar logistic regression. The choice of probit versus logit depends largely on individual preferences.
+
+* OLS regression. When used with a binary response variable, this model is known as a linear probability model and can be used as a way to describe conditional probabilities.
+
+* Two-group discriminant function analysis. A multivariate method for dichotomous outcome variables.
+
+## Using the logit model
+
+The code below estimates a logistic regression model using the glm (generalized linear model) function. First, we convert rank to a factor to indicate that rank should be treated as a categorical variable.
+
+```{r}
+mydata$rank <- factor(mydata$rank)
+mylogit <- glm(admit ~ gre + gpa + rank, data = mydata, family = "binomial")
+```
+
+Since we gave our model a name (mylogit), R will **not** produce any output from our regression. In order to get the results we use the summary command:
+
+```{r}
+summary(mylogit)
+```
+
+* In the output above, the first thing we see is the call, this is R reminding us what the model we ran was, what options we specified, etc.
+
+* Next we see the deviance residuals, which are a measure of model fit. This part of output shows the distribution of the deviance residuals for individual cases used in the model. Below we discuss how to use summaries of the deviance statistic to assess model fit.
+
+* The next part of the output shows the coefficients, their standard errors, the z-statistic (sometimes called a Wald z-statistic), and the associated p-values. Both gre and gpa are statistically significant, as are the three terms for rank. 
+
+The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variable.
+
+* For every one unit change in gre, the log odds of admission (versus non-admission) increases by 0.002.
+
+* For a one unit increase in gpa, the log odds of being admitted to graduate school increases by 0.804.
+
+* The indicator variables for rank have a slightly different interpretation. For example, having attended an undergraduate institution with rank of 2, versus an institution with a rank of 1, changes the log odds of admission by -0.675.
+
+Below the table of coefficients are fit indices, including the null and deviance residuals and the AIC. Later I will show an example of how you can use these values to help assess model fit.
+
+
+We can use the **confint** function to obtain confidence intervals for the coefficient estimates. Note that for logistic models, confidence intervals are based on the profiled log-likelihood function. We can also get CIs based on just the standard errors by using the default method.
+
+```{r}
+## CIs using profiled log-likelihood
+confint(mylogit)
+```
+
+```{r}
+## CIs using standard errors
+confint.default(mylogit)
+```
+
+We can test for an overall effect of **rank** using the **wald.test** function of the aod library. The order in which the coefficients are given in the table of coefficients is the same as the order of the terms in the model. 
+This is important because the **wald.test** function refers to the coefficients by their order in the model. We use the wald.test function, **b** supplies the coefficients, while Sigma supplies the variance covariance matrix of the error terms, finally **Terms** tells R which terms in the model are to be tested, in this case, terms 4, 5, and 6, are the three terms for the levels of rank.
+
+```{r}
+wald.test(b = coef(mylogit), Sigma = vcov(mylogit), Terms = 4:6)
+```
+
+The chi-squared test statistic of 20.9, with three degrees of freedom is associated with a p-value of 0.00011 indicating that the overall effect of rank is statistically significant.
+
+
+We can also test additional hypotheses about the differences in the coefficients for the different levels of rank. 
+
+Below we test that the coefficient for rank=2 is equal to the coefficient for rank=3. The first line of code below creates a vector **l** that defines the test we want to perform. In this case, we want to test the difference (subtraction) of the terms for rank=2 and rank=3 (i.e., the 4th and 5th terms in the model). 
+
+To contrast these two terms, we multiply one of them by 1, and the other by -1. The other terms in the model are not involved in the test, so they are multiplied by 0. The second line of code below uses L=l to tell R that we wish to base the test on the vector **l** (rather than using the Terms option as we did above).
+
+```{r}
+l <- cbind(0, 0, 0, 1, -1, 0)
+wald.test(b = coef(mylogit), Sigma = vcov(mylogit), L = l)
+```
+
+The chi-squared test statistic of 5.5 with 1 degree of freedom is associated with a p-value of 0.019, indicating that the difference between the coefficient for rank=2 and the coefficient for rank=3 is statistically significant.
+
+You can also exponentiate the coefficients and interpret them as **odds-ratios**. R will do this computation for you. To get the exponentiated coefficients, you tell R that you want to exponentiate (exp), and that the object you want to exponentiate is called coefficients and it is part of mylogit (coef(mylogit)). We can use the same logic to get odds ratios and their confidence intervals, by exponentiating the confidence intervals from before. To put it all in one table, we use cbind to bind the coefficients and confidence intervals column-wise.
+
+```{r}
+## odds ratios only
+exp(coef(mylogit))
+```
+
+```{r}
+## odds ratios and 95% CI
+exp(cbind(OR = coef(mylogit), confint(mylogit)))
+```
+
+Now we can say that for a one unit increase in gpa, the odds of being admitted to graduate school (versus not being admitted) increase by a factor of 2.23. Note that while R produces it, the odds ratio for the intercept is *not* generally interpreted.
+
+
+## How well does our model fit the data?
+
+We may also wish to see measures of how well our model fits. This can be particularly useful when comparing competing models. 
+
+Let us compare the full model with one that only uses GPA
+
+```{r}
+mylogit <- glm(admit ~ gre + gpa + rank, data = mydata, family = "binomial")
+
+mylogit_gpa <- glm(admit ~ gpa, data = mydata, family = "binomial")
+
+summary(mylogit)
+
+summary(mylogit_gpa)
+```
+
+
+The output produced by summary(mylogit) included indices of fit (shown below the coefficients), including the null and deviance residuals and the **AIC**. The AIC (Akaike’s Information Criteria) statistic is important for model selection.
+
+The basic principles that guide the use of the AIC are:
+
+1. Lower indicates a more parsimonious model (That means better!), relative to a model fit with a higher AIC.
+
+2. It is a relative measure of model parsimony, so it only has meaning if we compare the AIC for alternate hypotheses (= different models of the data).
+
+3. The comparisons are only valid for models that are fit to the same response data (ie values of y).
+
+4. You can also access the AIC in R with the AIC() function.
+
+```{r}
+AIC(mylogit, mylogit_gpa)
+```
+
+Which model do you think is better based on AIC?
+
+One other common measure of model fit is the significance of the overall model. This test asks whether the model with predictors fits significantly better than a model with just an intercept (i.e., a null model). 
+
+The test statistic is the difference between the residual deviance for the model with predictors and the null model. 
+
+The test statistic is distributed chi-squared with degrees of freedom equal to the differences in degrees of freedom between the current and the null model (i.e., the number of predictor variables in the model). To find the difference in deviance for the two models (i.e., the test statistic) we can use the command:
+
+```{r}
+with(mylogit, null.deviance - deviance)
+```
+
+Finally, the p-value can be obtained using:
+
+```{r}
+with(mylogit, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+```
+
+The chi-square of 41.46 with an associated p-value of less than 0.001 tells us that our model as a whole fits significantly better than an empty model. 
+
+
+# Exercise
+
+Now you have learned how to run a logistic regression. 
+It's time to practice.
+
+We’ll use the Default dataset from the ISLR package. This is a simulated data set containing information on ten thousand customers. The aim here is to predict which customers will default on their credit card debt.
+
+```{r}
+#load dataset
+data <- ISLR::Default
+
+#view summary of dataset
+summary(data)
+```
+
+
+This dataset contains the following information about 10,000 individuals:
+
+* default: Indicates whether or not an individual defaulted.
+
+* student: Indicates whether or not an individual is a student.
+
+* balance: Average balance carried by an individual.
+
+* income: Income of the individual.
+
+Make a boxplot showing the relationship between defaulting with balance as the y variable and fill as default. 
+
+```{r}
+# boxplot 1
+
+
+```
+
+Now make a boxplot showing the distribution of balance across students.
+
+```{r}
+# boxplot2
+
+
+```
+
+
+If we plot the distribution of balance across student, we see that students tend to carry larger credit card balances. **That is interesting...**
+
+Estimates a logistic regression model using the glm function with default as the outcome. 
+
+Make one model with **student** as the only predictor, then a second model with **all** variables in the dataset. 
+
+```{r}
+# Put your two models here
+
+
+```
+
+
+Interpret the summary of the model. What variables are the most or least significant on default status?
+
+```{r}
+#summary of the models here
+
+
+```
+
+Can you calculate the OR for the variables in the full model and the student only model? 
+
+```{r}
+## odds ratios and 95% CI
+
+
+```
+
+
+Determine the AIC of both models and them make a conclusion about which one is better. 
+```{r}
+## AIC 
+
+```
+
+## Put your conclusion about the two models here in words. 
+
+n?
+
+Suppose that we are interested in the factors that influence whether a political candidate wins an election. The outcome (response) variable is binary (0/1); win or lose. The predictor variables of interest are the amount of money spent on the campaign, the amount of time spent campaigning negatively and whether or not the candidate is an incumbent.
+
+Another example could be how variables, such as GRE (Graduate Record Exam scores), GPA (grade point average) and prestige of the undergraduate institution, effect admission into graduate school. The response variable, admit/don’t admit, is a binary variable.
+
+For our data analysis below, we are going to expand on the second example about getting into graduate school in the US. (That is for master's and PhD programs) We have generated hypothetical data, which can be obtained from a website from within R. Note that R requires forward slashes (/) not back slashes () when specifying a file location even if the file is on your hard drive.
+
+# Load the data from a webpage
+```{r}
+mydata <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+## view the first few rows of the data
+head(mydata)
+```
+
+This dataset has a binary response (outcome, dependent) variable called **admit**. There are three predictor variables: gre, gpa and rank. We will treat the variables gre and gpa as continuous. The variable rank takes on the values 1 through 4. Institut
