@@ -2,12 +2,9 @@
 Teaching materials for Data Science are found in the folders above.
 
 
----
-title: "Applied Data Science and Data Visualisation Syllabus"
-author: "John Shorter"
-date: "03-Feb-2025"
+# Applied Data Science and Data Visualisation Syllabus"
+## author: "John Shorter"
 
----
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
